@@ -16,8 +16,8 @@ class Customer(BaseModel):
     name = models.CharField(_("name"), max_length=150)
     type = models.CharField(_("type"), max_length=100, choices=TYPE_CHOICES, default=PERSONAL)
     email = models.EmailField(_("email"), null=True, blank=True)
-    phonde_number_1 = models.CharField(_("phone number"), max_length=100)
-    phonde_number_2 = models.CharField(_("phone number"), max_length=100)
+    phone_number_1 = models.CharField(_("phone number"), max_length=100, null=True, blank=True)
+    phone_number_2 = models.CharField(_("phone number"), max_length=100, null=True, blank=True)
     address = models.TextField()
 
     class Meta:
