@@ -1,8 +1,8 @@
 from warehouse.models import Warehouse, Stock
 from warehouse.api.selectors import warehouse_list, stock_list
 
-def create_warehouse(*, name: str, address: str) -> Warehouse:
-    obj = Warehouse.objects.create(name=name, address=address)
+def create_warehouse(*, office, name: str, address: str) -> Warehouse:
+    obj = Warehouse.objects.create(office=office, name=name, address=address)
     obj.full_clean()
     return obj
 

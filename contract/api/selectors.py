@@ -6,7 +6,7 @@ def customer_list() -> QuerySet[Customer]:
     return qs
 
 def contract_list() -> QuerySet[Contract]:
-    qs = Contract.objects.select_related('customer', 'responsible_employee').all()
+    qs = Contract.objects.select_related('customer', 'responsible_employee', 'product', 'office').all()
     return qs
 
 def installment_list() -> QuerySet[Installment]:

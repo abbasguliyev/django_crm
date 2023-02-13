@@ -3,11 +3,18 @@ from warehouse.models import Warehouse, Stock
 from warehouse.api.selectors import warehouse_list
 from product.api.serializers import ProductSerializer
 from product.api.selectors import product_list
+from company.api.serializers import OfficeSerializer
+from company.api.selectors import office_list
 
 class WarehouseSerializer(serializers.ModelSerializer):
+    office = OfficeSerializer(read_only=True)
+    office_id = serializers.PrimaryKeyRelatedField(
+        queryset = office_list(), source = "office", write_only=True
+    )
+
     class Meta:
         model = Warehouse
-        fields = ['id', 'name', 'address']
+        fields = ['id', 'name', 'address', 'office', 'office_id']
 
 class StockSerializer(serializers.ModelSerializer):
     warehouse = WarehouseSerializer(read_only=True)

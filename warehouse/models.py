@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 
 class Warehouse(BaseModel):
     name = models.CharField(_("warehouse name"), max_length=200)
+    office = models.ForeignKey("company.Office", on_delete=models.CASCADE, related_name="warehouses")
     address = models.TextField()
 
     class Meta:

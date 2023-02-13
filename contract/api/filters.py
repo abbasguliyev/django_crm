@@ -17,6 +17,7 @@ class ContractFilter(django_filters.FilterSet):
     class Meta:
         model = Contract
         fields = {
+            "office": ['exact'],
             "customer": ['exact'],
             "customer__name": ['exact', 'icontains'],
             "customer__email": ['exact', 'icontains'],
@@ -25,6 +26,11 @@ class ContractFilter(django_filters.FilterSet):
             "contract_start_date": ['exact', 'gte', 'lte'],
             "responsible_employee": ['exact'],
             "contract_type": ['exact'],
+            "product": ['exact'],
+            "product_quantity": ['exact'],
+            "total_amount": ['exact'],
+            "remaining_payment": ['exact'],
+            "discount": ['exact'],
         }
 
 class InstallmentFilter(django_filters.FilterSet):
@@ -33,7 +39,6 @@ class InstallmentFilter(django_filters.FilterSet):
         fields = {
             "contract": ['exact'],
             "amount": ['exact'],
-            "paid_amount": ['exact'],
             "payment_date": ['exact', 'gte', 'lte'],
             "paid_date": ['exact', 'gte', 'lte'],
             "type": ['exact'],

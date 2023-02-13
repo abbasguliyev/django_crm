@@ -2,6 +2,9 @@ from rest_framework import serializers
 from contract.models import Contract, Customer, Installment
 from contract.api.selectors import customer_list, contract_list
 from account.api.selectors import user_list
+from product.api.selectors import product_list
+from company.api.serializers import OfficeSerializer
+from company.api.selectors import office_list
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,9 +12,19 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'email', 'phone_number_1', 'phone_number_2', 'address']
 
 class ContractSerializer(serializers.ModelSerializer):
+    office = OfficeSerializer(read_only=True)
+    office_id = serializers.PrimaryKeyRelatedField(
+        queryset = office_list(), source="office", write_only=True
+    )
+
     customer = CustomerSerializer(read_only=True)
     customer_id = serializers.PrimaryKeyRelatedField(
         queryset = customer_list(), source="customer", write_only=True
+    )
+
+    product = CustomerSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset = product_list(), source="product", write_only=True
     )
 
     responsible_employee = CustomerSerializer(read_only=True)
@@ -21,7 +34,7 @@ class ContractSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contract
-        fields = ['id', 'customer', 'customer_id', 'loan_term', 'initial_payment', 'contract_start_date', 'responsible_employee', 'responsible_employee_id', 'contract_type']
+        fields = ['id', 'office', 'office_id', 'customer', 'customer_id', 'product', 'product_id', 'product_quantity', 'total_amount', 'remaining_payment', 'loan_term', 'initial_payment', 'contract_start_date', 'responsible_employee', 'responsible_employee_id', 'contract_type']
 
 class InstallmentSerializer(serializers.ModelSerializer):
     contract = CustomerSerializer(read_only=True)
