@@ -5,7 +5,7 @@ from company.api.selectors import company_list
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ['__all__']
+        fields = '__all__'
 
 class OfficeSerializer(serializers.ModelSerializer):
     company = CompanySerializer(read_only = True)

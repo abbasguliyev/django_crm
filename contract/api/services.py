@@ -1,6 +1,7 @@
 from django.utils import timezone
 from contract.models import Customer, Contract, Installment
 from contract.api.selectors import customer_list, contract_list, installment_list
+import pandas as pd
 
 def create_customer(
     *, name: str, 
@@ -53,19 +54,87 @@ def update_contract(instance, **data) -> Contract:
     return obj
 
 
-def create_installment(
-    *, contract, 
-    amount: int = 0,
-    payment_date: str = None,
-    paid_date: str = None,
-    type: str
-) -> Installment:
-    obj = Installment.objects.create(
-        contract=contract, amount=amount, payment_date=payment_date, 
-        paid_date=paid_date, type=type
-    )
-    obj.full_clean()
-    return obj
+def create_installment_for_loan_term(
+    *, loan_term, 
+    inc_month, 
+    payment_amount_for_last_month, 
+    payment_amount_for_month,
+    contract,
+    now
+):
+    i = 1
+    while i <= loan_term:
+        if i == loan_term:
+            if now.day < 29:
+                Installment.objects.create(
+                    contract=contract,
+                    payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{now.day}",
+                    amount=payment_amount_for_last_month
+                ).save()
+            elif now.day == 31 or now.day == 30 or now.day == 29:
+                if inc_month[i].day <= now.day:
+                    Installment.objects.create(
+                        contract=contract,
+                        payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{inc_month[i].day}",
+                        amount=payment_amount_for_last_month
+                    ).save()
+                elif inc_month[i].day > now.day:
+                    Installment.objects.create(
+                        contract=contract,
+                        payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{now.day}",
+                        amount=payment_amount_for_last_month
+                    ).save()
+        else:
+            if now.day < 29:
+                Installment.objects.create(
+                    contract=contract,
+                    payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{now.day}",
+                    amount=payment_amount_for_month
+                ).save()
+            elif now.day == 31 or now.day == 30 or now.day == 29:
+                if inc_month[i].day <= now.day:
+                    Installment.objects.create(
+                        contract=contract,
+                        payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{inc_month[i].day}",
+                        amount=payment_amount_for_month
+                    ).save()
+                if inc_month[i].day > now.day:
+                    Installment.objects.create(
+                        contract=contract,
+                        payment_date=f"{inc_month[i].year}-{inc_month[i].month}-{now.day}",
+                        amount=payment_amount_for_month
+                    ).save()
+        i += 1
+
+def create_installment(contract):
+    loan_term = contract.loan_term
+
+    if contract.contract_type == "Installment":
+        now = contract.contract_start_date
+        inc_month = pd.date_range(now, periods=loan_term+1, freq='M')
+        initial_payment = contract.initial_payment
+
+        if initial_payment is None:
+            initial_payment = 0
+
+        total_amount = contract.total_amount
+
+        total_payment_amount_for_month = total_amount - initial_payment
+
+        payment_amount_for_month = total_payment_amount_for_month // loan_term
+
+        debt = payment_amount_for_month * (loan_term - 1)
+        payment_amount_for_last_month = total_payment_amount_for_month - debt
+
+        if loan_term > 0:    
+            create_installment_for_loan_term(
+                loan_term=loan_term,
+                inc_month=inc_month,
+                payment_amount_for_last_month=payment_amount_for_last_month,
+                payment_amount_for_month=payment_amount_for_month,
+                contract=contract,
+                now=now
+            )
 
 def update_installment(instance, **data) -> Installment:
     type = data.get('type')

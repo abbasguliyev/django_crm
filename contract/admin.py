@@ -17,4 +17,5 @@ class ContractAdmin(admin.ModelAdmin):
 class InstallmentAdmin(admin.ModelAdmin):
     list_display = ("id", "contract", "amount", "payment_date", "paid_date", "type")
     list_display_links  = ("id",)
+    list_filter = ('contract', 'type')
     
