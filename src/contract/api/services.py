@@ -1,7 +1,11 @@
+import pandas as pd
 from django.utils import timezone
 from contract.models import Customer, Contract, Installment
 from contract.api.selectors import customer_list, contract_list, installment_list
-import pandas as pd
+from warehouse.api.decorators import reduce_product_from_stock_decorator
+from cashbox.api.decorators import contract_cashbox_decorator
+from cashbox.api.selectors import cashbox_list
+from cashbox.api.services import create_cashflow
 
 def create_customer(
     *, name: str, 
@@ -23,6 +27,8 @@ def update_customer(instance, **data) -> Customer:
     obj = customer_list().filter(pk=instance.pk).update(**data)
     return obj
 
+@contract_cashbox_decorator
+@reduce_product_from_stock_decorator
 def create_contract(
     *, office, 
     customer, 
@@ -47,6 +53,7 @@ def create_contract(
         remaining_payment=remaining_payment, discount=discount
     )
     obj.full_clean()
+    obj.save()
     return obj
 
 def update_contract(instance, **data) -> Contract:
@@ -139,11 +146,28 @@ def create_installment(contract):
 def update_installment(instance, **data) -> Installment:
     type = data.get('type')
     if type is not None:
-        instance.paid_date = timezone.now
-        instance.type = "Finished"
-        instance.save()
-        instance.contract.remaining_payment = instance.contract.remaining_payment - instance.amount
-        instance.contract.save()
+        pay_installment(instance=instance)
 
     obj = installment_list().filter(pk=instance.pk).update(**data)
     return obj
+
+def pay_installment(instance):
+    instance.paid_date = timezone.now
+    instance.type = "Finished"
+    instance.save()
+    instance.contract.remaining_payment = instance.contract.remaining_payment - instance.amount
+    instance.contract.save()
+
+    cashbox = cashbox_list().filter(office=instance.contract.office).last()
+    cashbox.balance = cashbox.balance + instance.amount
+    cashbox.save()
+
+    create_cashflow(
+        office=instance.contract.office, 
+        customer=instance.contract.customer, 
+        personal=instance.contract.responsible_employee, 
+        description="Pay Installment",
+        balance=cashbox.balance,
+        operation_style="INCOME",
+        quantity=instance.amount
+    )

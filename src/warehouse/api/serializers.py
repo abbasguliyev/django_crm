@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from warehouse.models import Warehouse, Stock
-from warehouse.api.selectors import warehouse_list
+from warehouse.api.selectors import warehouse_list, stock_list
 from product.api.serializers import ProductSerializer
 from product.api.selectors import product_list
 from company.api.serializers import OfficeSerializer
@@ -30,3 +30,9 @@ class StockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
         fields = ['id', 'warehouse', 'warehouse_id', 'product', 'product_id', 'quantity']
+
+class ChangeQuantityStockSerializer(serializers.Serializer):
+    stock_id = serializers.PrimaryKeyRelatedField(
+        queryset = stock_list()
+    )
+    quantity = serializers.IntegerField()

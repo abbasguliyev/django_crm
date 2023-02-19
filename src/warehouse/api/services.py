@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from warehouse.models import Warehouse, Stock
 from warehouse.api.selectors import warehouse_list, stock_list
 
@@ -22,3 +23,18 @@ def create_stock(
 def update_stock(instance, **data) -> Stock:
     obj = stock_list().filter(pk=instance.pk).update(**data)
     return obj
+
+def reduce_product_from_stock(stock: Stock, product_quantity: int) -> int:
+    stock.quantity = stock.quantity - product_quantity
+    if stock.quantity < product_quantity:
+        raise ValidationError(detail="There are not enough products in stock")
+    stock.quantity = stock.quantity - product_quantity
+    stock.save()
+    if stock.quantity == 0:
+        stock.delete()
+    return stock.quantity
+
+def add_product_to_stock(stock: Stock, product_quantity: int) -> int:
+    stock.quantity = stock.quantity + product_quantity
+    stock.save()
+    return stock.quantity

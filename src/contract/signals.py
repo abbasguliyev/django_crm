@@ -8,3 +8,8 @@ from contract.api.selectors import installment_list
 def create_installment_signal(sender, instance, created, **kwargs):
     if created:
         create_installment(contract=instance)
+
+@receiver(post_save, sender=Contract)
+def create_installment_signal(sender, instance, created, **kwargs):
+    if created:
+        create_installment(contract=instance)

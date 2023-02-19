@@ -1,8 +1,9 @@
 from rest_framework.views import Response
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import action
 from warehouse.api.selectors import warehouse_list, stock_list
-from warehouse.api.services import create_warehouse, update_warehouse, create_stock, update_stock
-from warehouse.api.serializers import WarehouseSerializer, StockSerializer
+from warehouse.api.services import create_warehouse, update_warehouse, create_stock, update_stock, add_product_to_stock, reduce_product_from_stock
+from warehouse.api.serializers import WarehouseSerializer, StockSerializer, ChangeQuantityStockSerializer
 from warehouse.api.filters import WarehouseFilter, StockFilter
 
 class WarehouseViewSet(viewsets.ModelViewSet):
@@ -44,4 +45,20 @@ class StockViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         update_stock(instance=instance, **serializer.validated_data)
         return Response(serializer.data)
+    
+    @action(methods=["POST"], detail=False, serializer_class=ChangeQuantityStockSerializer, url_path="increase-stock")
+    def increase_stock(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        add_product_to_stock(**serializer.validated_data)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    @action(methods=["POST"], detail=False, serializer_class=ChangeQuantityStockSerializer, url_path="decrease-stock")
+    def decrease_stock(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        reduce_product_from_stock(**serializer.validated_data)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
